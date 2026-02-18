@@ -71,6 +71,17 @@ public class UserService {
     }
 
     @Transactional
+    public void changePassword(Long id, String currentPassword, String newPassword) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void deactivateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));

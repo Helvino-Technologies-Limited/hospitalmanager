@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -41,6 +42,12 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserDTO>> update(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
         return ResponseEntity.ok(ApiResponse.success(userService.updateUser(id, dto)));
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        userService.changePassword(id, body.get("currentPassword"), body.get("newPassword"));
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 
     @DeleteMapping("/{id}")

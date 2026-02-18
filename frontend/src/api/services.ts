@@ -147,6 +147,8 @@ export const userApi = {
   create: (data: Partial<User>) => api.post<ApiResponse<User>>('/users', data),
   update: (id: number, data: Partial<User>) => api.put<ApiResponse<User>>(`/users/${id}`, data),
   deactivate: (id: number) => api.delete<ApiResponse<void>>(`/users/${id}`),
+  changePassword: (id: number, currentPassword: string, newPassword: string) =>
+    api.put<ApiResponse<void>>(`/users/${id}/password`, { currentPassword, newPassword }),
 };
 
 // Dashboard
