@@ -78,7 +78,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
               <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-              <Tooltip formatter={(v: number) => [`KES ${v.toLocaleString()}`, 'Revenue']} />
+              <Tooltip formatter={(v: number | undefined) => [`KES ${(v ?? 0).toLocaleString()}`, 'Revenue']} />
               <Bar dataKey="revenue" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

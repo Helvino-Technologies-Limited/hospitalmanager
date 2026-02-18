@@ -76,7 +76,7 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" fontSize={12} />
                 <YAxis fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-                <Tooltip formatter={(v: number) => [`KES ${v.toLocaleString()}`, '']} />
+                <Tooltip formatter={(v: number | undefined) => [`KES ${(v ?? 0).toLocaleString()}`, '']} />
                 <Bar dataKey="value" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

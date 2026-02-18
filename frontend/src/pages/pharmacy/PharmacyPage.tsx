@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, AlertTriangle, Pill, ClipboardList } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import Modal from '../../components/Modal';
-import StatusBadge from '../../components/StatusBadge';
 import { pharmacyApi } from '../../api/services';
 import type { Drug, Prescription } from '../../types';
 
