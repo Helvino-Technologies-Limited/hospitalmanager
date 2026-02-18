@@ -23,7 +23,7 @@ export default function AppointmentsPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState(() => new Date().toISOString().split('T')[0]);
+  const [dateFilter, setDateFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -100,6 +100,7 @@ export default function AppointmentsPage() {
         walkIn: form.walkIn,
       });
       setModalOpen(false);
+      setDateFilter(form.appointmentDate);
       fetchAppointments();
     } catch {
       // Error
