@@ -3,6 +3,7 @@ package com.helvinotech.hms.service;
 import com.helvinotech.hms.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReportService {
 
     private final BillingRepository billingRepository;

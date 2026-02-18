@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PatientService {
 
     private final PatientRepository patientRepository;

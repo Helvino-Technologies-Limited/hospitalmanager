@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class InsuranceService {
 
     private final InsuranceCompanyRepository companyRepository;
@@ -30,6 +31,7 @@ public class InsuranceService {
     public InsuranceCompanyDTO createCompany(InsuranceCompanyDTO dto) {
         InsuranceCompany c = new InsuranceCompany();
         mapCompanyDtoToEntity(dto, c);
+        c.setActive(true);
         return mapCompanyToDto(companyRepository.save(c));
     }
 

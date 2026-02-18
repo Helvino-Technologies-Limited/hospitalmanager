@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PharmacyService {
 
     private final DrugRepository drugRepository;
@@ -32,6 +33,7 @@ public class PharmacyService {
     public DrugDTO createDrug(DrugDTO dto) {
         Drug drug = new Drug();
         mapDtoToEntity(dto, drug);
+        drug.setActive(true);
         return mapDrugToDto(drugRepository.save(drug));
     }
 

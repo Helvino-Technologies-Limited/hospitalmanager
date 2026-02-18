@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class LabService {
 
     private final LabTestRepository labTestRepository;
@@ -29,6 +30,7 @@ public class LabService {
     public LabTestDTO createTest(LabTestDTO dto) {
         LabTest test = new LabTest();
         mapTestDtoToEntity(dto, test);
+        test.setActive(true);
         return mapTestToDto(labTestRepository.save(test));
     }
 
