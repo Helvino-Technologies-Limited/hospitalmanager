@@ -7,19 +7,13 @@ import {
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { patientApi, visitApi, billingApi, userApi, wardApi, pharmacyApi } from '../../api/services';
+import { useHospitalStore } from '../../store/hospitalStore';
 import type {
   Patient, Visit, Billing, User as UserType, Ward, Room, Bed, Admission,
   Drug, Prescription, VisitType,
 } from '../../types';
 
 type Tab = 'overview' | 'visits' | 'admissions' | 'billing';
-
-// Hospital branding for receipts — update these to match the facility
-const HOSPITAL_NAME = 'Your Hospital Name';
-const HOSPITAL_TAGLINE = 'Quality Healthcare Services';
-const HOSPITAL_ADDRESS = 'P.O. Box 00000, Nairobi, Kenya';
-const HOSPITAL_PHONE = '+254 700 000 000';
-const HOSPITAL_EMAIL = 'info@yourhospital.co.ke';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(amount);
@@ -575,6 +569,8 @@ function BillingTab({
   totalPages: number;
   onPageChange: (p: number) => void;
 }) {
+  const hospital = useHospitalStore();
+
   if (billings.length === 0 && page === 0) {
     return <p className="text-center py-12 text-gray-400">No billing records.</p>;
   }
@@ -599,9 +595,9 @@ th{background:#f5f5f5;font-weight:600}
 @media print{body{padding:0}}
 </style></head><body>
 <div class="header">
-<h1>${HOSPITAL_NAME}</h1>
-<p>${HOSPITAL_TAGLINE}</p>
-<p>${HOSPITAL_ADDRESS} | Tel: ${HOSPITAL_PHONE} | ${HOSPITAL_EMAIL}</p>
+<h1>${hospital.name}</h1>
+<p>${hospital.tagline}</p>
+<p>${hospital.address} | Tel: ${hospital.phone} | ${hospital.email}</p>
 <p style="margin-top:8px;font-weight:600">Receipt / Invoice</p>
 </div>
 <div class="info">
@@ -621,7 +617,7 @@ ${!bill.items || bill.items.length === 0 ? '<tr><td colspan="4" style="text-alig
 ${bill.payments?.length > 0 ? `<div class="payments"><h3>Payments</h3><table><thead><tr><th>Date</th><th>Method</th><th>Amount</th><th>Receipt #</th><th>Received By</th></tr></thead><tbody>
 ${bill.payments.map(p => `<tr><td>${new Date(p.createdAt).toLocaleDateString()}</td><td>${p.paymentMethod}</td><td>${formatCurrency(p.amount)}</td><td>${p.receiptNumber || '-'}</td><td>${p.receivedByName || '-'}</td></tr>`).join('')}
 </tbody></table></div>` : ''}
-<div class="footer"><p>Thank you for choosing ${HOSPITAL_NAME}</p><p>Printed on ${new Date().toLocaleString()}</p><p style="margin-top:6px;font-size:10px;color:#bbb">Powered by Helvino Technologies | www.helvino.com</p></div>
+<div class="footer"><p>Thank you for choosing ${hospital.name}</p><p>Printed on ${new Date().toLocaleString()}</p><p style="margin-top:6px;font-size:10px;color:#bbb">Powered by Helvino Technologies | www.helvino.com</p></div>
 </body></html>`);
     win.document.close();
     win.focus();

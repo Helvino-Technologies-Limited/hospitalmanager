@@ -17,7 +17,7 @@ export default function DoctorQueuePage() {
     setLoading(true);
     try {
       const res = await visitApi.getDoctorQueue(userId);
-      setQueue(res.data.data);
+      setQueue(res.data.data || []);
     } catch {
       // ignore
     } finally {

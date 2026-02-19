@@ -16,7 +16,8 @@ interface Props<T> {
   loading?: boolean;
 }
 
-export default function DataTable<T extends { id: number }>({ columns, data, page = 0, totalPages = 1, onPageChange, onRowClick, loading }: Props<T>) {
+export default function DataTable<T extends { id: number }>({ columns, data: rawData, page = 0, totalPages = 1, onPageChange, onRowClick, loading }: Props<T>) {
+  const data = rawData || [];
   if (loading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8">
