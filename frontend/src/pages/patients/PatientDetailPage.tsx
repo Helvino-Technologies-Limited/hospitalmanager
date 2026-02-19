@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Phone, Mail, MapPin, Shield, Droplets, AlertTriangle,
   Calendar, User, Plus, BedDouble, FileText, Pill, Search, Printer,
-  ChevronDown, ChevronUp, X, LogOut,
+  ChevronDown, ChevronUp, X, LogOut, Share2,
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 import { patientApi, visitApi, billingApi, userApi, wardApi, pharmacyApi } from '../../api/services';
@@ -624,6 +624,54 @@ ${bill.payments.map(p => `<tr><td>${new Date(p.createdAt).toLocaleDateString()}<
     win.print();
   };
 
+  const shareReceiptWhatsApp = (bill: Billing) => {
+    const balance = bill.totalAmount - bill.paidAmount - bill.insuranceCoveredAmount;
+    const items = bill.items || [];
+    const payments = bill.payments || [];
+
+    const lines = [
+      `*${hospital.name}*`,
+      `_${hospital.tagline}_`,
+      `${hospital.address} | Tel: ${hospital.phone}`,
+      '',
+      `*RECEIPT / INVOICE*`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `*Invoice:* ${bill.invoiceNumber}`,
+      `*Patient:* ${patient.fullName} (${patient.patientNo})`,
+      `*Date:* ${new Date(bill.createdAt).toLocaleDateString()}`,
+      `*Status:* ${bill.status}`,
+    ];
+
+    if (items.length > 0) {
+      lines.push('', `*Services:*`);
+      items.forEach((item) => {
+        lines.push(`• ${item.description} (x${item.quantity}) — ${formatCurrency(item.totalPrice)}`);
+      });
+    }
+
+    lines.push(
+      '',
+      `*Total:* ${formatCurrency(bill.totalAmount)}`,
+      `*Paid:* ${formatCurrency(bill.paidAmount)}`,
+      `*Insurance:* ${formatCurrency(bill.insuranceCoveredAmount)}`,
+      `*Balance:* ${formatCurrency(Math.max(0, balance))}`,
+    );
+
+    if (payments.length > 0) {
+      lines.push('', `*Payments:*`);
+      payments.forEach((p) => {
+        lines.push(`• ${formatCurrency(p.amount)} via ${p.paymentMethod.replace(/_/g, ' ')} on ${new Date(p.createdAt).toLocaleDateString()}${p.receiptNumber ? ` (${p.receiptNumber})` : ''}`);
+      });
+    }
+
+    lines.push('', `━━━━━━━━━━━━━━━━━━━━`, `_Thank you for choosing ${hospital.name}_`);
+
+    const text = encodeURIComponent(lines.join('\n'));
+    const cleanPhone = (patient.phone || '').replace(/[\s\-()]/g, '').replace(/^0/, '254');
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="space-y-4">
       {billings.map((bill) => (
@@ -634,6 +682,12 @@ ${bill.payments.map(p => `<tr><td>${new Date(p.createdAt).toLocaleDateString()}<
               <StatusBadge status={bill.status} />
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => shareReceiptWhatsApp(bill)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+              >
+                <Share2 className="w-3.5 h-3.5" /> WhatsApp
+              </button>
               <button
                 onClick={() => printReceipt(bill)}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"

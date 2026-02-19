@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Pill, FlaskConical, Scan } from 'lucide-react';
-import { visitApi, pharmacyApi, labApi } from '../../api/services';
+import { ArrowLeft, Save, Plus, Pill, FlaskConical, Scan, Printer, Share2 } from 'lucide-react';
+import { visitApi, pharmacyApi, labApi, patientApi } from '../../api/services';
 import { useAuthStore } from '../../store/authStore';
+import { useHospitalStore } from '../../store/hospitalStore';
 import type { Visit, Drug, LabTest } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import Modal from '../../components/Modal';
@@ -105,6 +106,225 @@ export default function VisitDetailPage() {
     loadVisit();
   };
 
+  const hospital = useHospitalStore();
+
+  const printDiagnosisReport = () => {
+    if (!visit) return;
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    const vitals = [
+      visit.bloodPressure && `Blood Pressure: ${visit.bloodPressure}`,
+      visit.temperature && `Temperature: ${visit.temperature}°C`,
+      visit.pulseRate && `Pulse Rate: ${visit.pulseRate} bpm`,
+      visit.respiratoryRate && `Respiratory Rate: ${visit.respiratoryRate}/min`,
+      visit.oxygenSaturation && `O₂ Saturation: ${visit.oxygenSaturation}%`,
+      visit.weight && `Weight: ${visit.weight} kg`,
+      visit.height && `Height: ${visit.height} cm`,
+    ].filter(Boolean);
+
+    const prescriptions = visit.prescriptions || [];
+    const labOrders = visit.labOrders || [];
+    const imagingOrders = visit.imagingOrders || [];
+
+    win.document.write(`<!DOCTYPE html><html><head><title>Diagnosis Report - ${visit.patientName}</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:750px;margin:0 auto;padding:20px;color:#333;font-size:13px}
+.header{text-align:center;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:16px}
+.header h1{margin:0;font-size:20px} .header p{margin:2px 0;font-size:11px;color:#666}
+.header .doc-title{font-weight:700;font-size:13px;margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+.patient-info{display:flex;justify-content:space-between;background:#f9f9f9;padding:10px 14px;border-radius:6px;margin-bottom:16px}
+.patient-info div{font-size:12px;line-height:1.6}
+.section{margin-bottom:14px}
+.section h3{font-size:13px;font-weight:700;text-transform:uppercase;color:#555;border-bottom:1px solid #ddd;padding-bottom:4px;margin:0 0 8px 0;letter-spacing:0.5px}
+.section p{margin:4px 0;line-height:1.5}
+.section .label{color:#888;font-size:11px;text-transform:uppercase;letter-spacing:0.3px}
+.vitals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 12px}
+.vitals-grid span{font-size:12px}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid #eee;font-size:12px}
+th{background:#f5f5f5;font-weight:600;font-size:11px;text-transform:uppercase;color:#666}
+.signature{margin-top:40px;display:flex;justify-content:space-between}
+.signature div{text-align:center;width:200px}
+.signature .line{border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;color:#666}
+.footer{text-align:center;font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:8px;margin-top:30px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-abnormal{background:#fee;color:#c00} .badge-normal{background:#efe;color:#060}
+@media print{body{padding:0;margin:0}}
+</style></head><body>
+<div class="header">
+<h1>${hospital.name}</h1>
+<p>${hospital.tagline}</p>
+<p>${hospital.address} | Tel: ${hospital.phone} | ${hospital.email}</p>
+<div class="doc-title">Medical Diagnosis Report</div>
+</div>
+
+<div class="patient-info">
+<div>
+<strong>Patient:</strong> ${visit.patientName}<br/>
+<strong>Patient No:</strong> ${visit.patientNo}<br/>
+<strong>Visit Type:</strong> ${visit.visitType}
+</div>
+<div style="text-align:right">
+<strong>Doctor:</strong> Dr. ${visit.doctorName || 'N/A'}<br/>
+<strong>Date:</strong> ${visit.createdAt ? new Date(visit.createdAt).toLocaleDateString() : '-'}<br/>
+<strong>Visit #:</strong> ${visit.id}
+</div>
+</div>
+
+${vitals.length > 0 ? `<div class="section">
+<h3>Vital Signs</h3>
+<div class="vitals-grid">${vitals.map(v => `<span>${v}</span>`).join('')}</div>
+</div>` : ''}
+
+${visit.chiefComplaint ? `<div class="section">
+<h3>Chief Complaint</h3>
+<p>${visit.chiefComplaint}</p>
+</div>` : ''}
+
+${visit.presentingIllness ? `<div class="section">
+<h3>History of Presenting Illness</h3>
+<p>${visit.presentingIllness}</p>
+</div>` : ''}
+
+${visit.examination ? `<div class="section">
+<h3>Examination Findings</h3>
+<p>${visit.examination}</p>
+</div>` : ''}
+
+${visit.diagnosis ? `<div class="section">
+<h3>Diagnosis</h3>
+<p><strong>${visit.diagnosis}</strong>${visit.diagnosisCode ? ` <span style="color:#888">(ICD-10: ${visit.diagnosisCode})</span>` : ''}</p>
+</div>` : ''}
+
+${visit.treatmentPlan ? `<div class="section">
+<h3>Treatment Plan</h3>
+<p>${visit.treatmentPlan}</p>
+</div>` : ''}
+
+${visit.doctorNotes ? `<div class="section">
+<h3>Doctor's Notes</h3>
+<p>${visit.doctorNotes}</p>
+</div>` : ''}
+
+${prescriptions.length > 0 ? `<div class="section">
+<h3>Prescriptions</h3>
+<table>
+<thead><tr><th>Drug</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+<tbody>
+${prescriptions.map(rx => `<tr>
+<td>${rx.drugName}</td><td>${rx.dosage}</td><td>${rx.frequency}</td><td>${rx.duration}</td><td>${rx.instructions || '-'}</td>
+</tr>`).join('')}
+</tbody></table>
+</div>` : ''}
+
+${labOrders.length > 0 ? `<div class="section">
+<h3>Laboratory Results</h3>
+<table>
+<thead><tr><th>Test</th><th>Category</th><th>Status</th><th>Result</th></tr></thead>
+<tbody>
+${labOrders.map(lo => `<tr>
+<td>${lo.testName} (${lo.testCode})</td><td>${lo.category}</td><td>${lo.status.replace(/_/g, ' ')}</td>
+<td>${lo.result ? `${lo.result} ${lo.abnormal ? '<span class="badge badge-abnormal">Abnormal</span>' : '<span class="badge badge-normal">Normal</span>'}` : '-'}</td>
+</tr>`).join('')}
+</tbody></table>
+</div>` : ''}
+
+${imagingOrders.length > 0 ? `<div class="section">
+<h3>Imaging Reports</h3>
+<table>
+<thead><tr><th>Type</th><th>Body Part</th><th>Status</th><th>Findings</th></tr></thead>
+<tbody>
+${imagingOrders.map(io => `<tr>
+<td>${io.imagingType}</td><td>${io.bodyPart}</td><td>${io.status.replace(/_/g, ' ')}</td><td>${io.findings || '-'}</td>
+</tr>`).join('')}
+</tbody></table>
+</div>` : ''}
+
+<div class="signature">
+<div><div class="line">Doctor's Signature</div></div>
+<div><div class="line">Date & Stamp</div></div>
+</div>
+
+<div class="footer">
+<p>This is a computer-generated medical report from ${hospital.name}.</p>
+<p>Printed on ${new Date().toLocaleString()}</p>
+<p style="margin-top:4px;font-size:9px;color:#ccc">Powered by Helvino Technologies | www.helvino.com</p>
+</div>
+</body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
+  };
+
+  const shareReportWhatsApp = async () => {
+    if (!visit) return;
+    let phone = '';
+    try {
+      const res = await patientApi.getById(visit.patientId);
+      phone = res.data.data.phone || '';
+    } catch { /* ignore */ }
+
+    const prescriptions = visit.prescriptions || [];
+    const labOrders = visit.labOrders || [];
+
+    const lines = [
+      `*${hospital.name}*`,
+      `_${hospital.tagline}_`,
+      `${hospital.address} | Tel: ${hospital.phone}`,
+      '',
+      `*MEDICAL DIAGNOSIS REPORT*`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `*Patient:* ${visit.patientName}`,
+      `*Patient No:* ${visit.patientNo}`,
+      `*Doctor:* Dr. ${visit.doctorName || 'N/A'}`,
+      `*Date:* ${visit.createdAt ? new Date(visit.createdAt).toLocaleDateString() : '-'}`,
+      `*Visit Type:* ${visit.visitType}`,
+    ];
+
+    const vitals = [
+      visit.bloodPressure && `BP: ${visit.bloodPressure}`,
+      visit.temperature && `Temp: ${visit.temperature}°C`,
+      visit.pulseRate && `Pulse: ${visit.pulseRate} bpm`,
+      visit.respiratoryRate && `RR: ${visit.respiratoryRate}/min`,
+      visit.oxygenSaturation && `SpO₂: ${visit.oxygenSaturation}%`,
+      visit.weight && `Weight: ${visit.weight} kg`,
+    ].filter(Boolean);
+
+    if (vitals.length > 0) {
+      lines.push('', `*Vitals:* ${vitals.join(' | ')}`);
+    }
+
+    if (visit.chiefComplaint) lines.push('', `*Chief Complaint:*`, visit.chiefComplaint);
+    if (visit.diagnosis) {
+      lines.push('', `*Diagnosis:*`, `${visit.diagnosis}${visit.diagnosisCode ? ` (ICD-10: ${visit.diagnosisCode})` : ''}`);
+    }
+    if (visit.treatmentPlan) lines.push('', `*Treatment Plan:*`, visit.treatmentPlan);
+
+    if (prescriptions.length > 0) {
+      lines.push('', `*Prescriptions:*`);
+      prescriptions.forEach((rx, i) => {
+        lines.push(`${i + 1}. ${rx.drugName} — ${rx.dosage}, ${rx.frequency}, ${rx.duration}${rx.instructions ? ` (${rx.instructions})` : ''}`);
+      });
+    }
+
+    if (labOrders.length > 0) {
+      lines.push('', `*Lab Results:*`);
+      labOrders.forEach((lo) => {
+        lines.push(`• ${lo.testName}: ${lo.result ? `${lo.result}${lo.abnormal ? ' ⚠️ Abnormal' : ' ✓ Normal'}` : lo.status.replace(/_/g, ' ')}`);
+      });
+    }
+
+    if (visit.doctorNotes) lines.push('', `*Doctor's Notes:*`, visit.doctorNotes);
+
+    lines.push('', `━━━━━━━━━━━━━━━━━━━━`, `_Report from ${hospital.name}_`);
+
+    const text = encodeURIComponent(lines.join('\n'));
+    const cleanPhone = phone.replace(/[\s\-()]/g, '').replace(/^0/, '254');
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(url, '_blank');
+  };
+
   if (!visit) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
   const Field = ({ label, field, textarea }: { label: string; field: keyof Visit; textarea?: boolean }) => (
@@ -148,6 +368,12 @@ export default function VisitDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <button onClick={printDiagnosisReport} className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700">
+              <Printer className="w-4 h-4" /> Print Report
+            </button>
+            <button onClick={shareReportWhatsApp} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
+              <Share2 className="w-4 h-4" /> WhatsApp
+            </button>
             {!visit.completed && (
               <>
                 {editing ? (
