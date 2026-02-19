@@ -4,6 +4,7 @@ import com.helvinotech.hms.dto.InsuranceClaimDTO;
 import com.helvinotech.hms.dto.InsuranceCompanyDTO;
 import com.helvinotech.hms.entity.*;
 import com.helvinotech.hms.enums.ClaimStatus;
+import com.helvinotech.hms.exception.BadRequestException;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,9 @@ public class InsuranceService {
     // Companies
     @Transactional(readOnly = false)
     public InsuranceCompanyDTO createCompany(InsuranceCompanyDTO dto) {
+        companyRepository.findByName(dto.getName()).ifPresent(existing -> {
+            throw new BadRequestException("Insurance company '" + dto.getName() + "' already exists");
+        });
         InsuranceCompany c = new InsuranceCompany();
         mapCompanyDtoToEntity(dto, c);
         c.setActive(true);
