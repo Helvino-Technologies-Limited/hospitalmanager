@@ -28,6 +28,7 @@ public class InsuranceService {
     private final PatientRepository patientRepository;
 
     // Companies
+    @Transactional(readOnly = false)
     public InsuranceCompanyDTO createCompany(InsuranceCompanyDTO dto) {
         InsuranceCompany c = new InsuranceCompany();
         mapCompanyDtoToEntity(dto, c);
@@ -39,6 +40,7 @@ public class InsuranceService {
         return companyRepository.findByActiveTrue().stream().map(this::mapCompanyToDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = false)
     public InsuranceCompanyDTO updateCompany(Long id, InsuranceCompanyDTO dto) {
         InsuranceCompany c = companyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Insurance Company", id));
@@ -47,7 +49,7 @@ public class InsuranceService {
     }
 
     // Claims
-    @Transactional
+    @Transactional(readOnly = false)
     public InsuranceClaimDTO createClaim(InsuranceClaimDTO dto) {
         Billing billing = billingRepository.findById(dto.getBillingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Billing", dto.getBillingId()));
@@ -71,7 +73,7 @@ public class InsuranceService {
         return claimRepository.findByStatus(status, pageable).map(this::mapClaimToDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public InsuranceClaimDTO updateClaimStatus(Long id, ClaimStatus status, java.math.BigDecimal approvedAmount, String remarks) {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Insurance Claim", id));

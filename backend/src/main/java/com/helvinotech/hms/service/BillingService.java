@@ -31,7 +31,7 @@ public class BillingService {
     private final UserRepository userRepository;
     private static final AtomicLong invoiceCounter = new AtomicLong(0);
 
-    @Transactional
+    @Transactional(readOnly = false)
     public BillingDTO createBilling(BillingDTO dto) {
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
@@ -65,7 +65,7 @@ public class BillingService {
         return billingRepository.findAll(pageable).map(this::mapToDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public BillingDTO addItem(Long billingId, BillingItemDTO itemDto) {
         Billing billing = billingRepository.findById(billingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
@@ -83,7 +83,7 @@ public class BillingService {
         return mapToDto(billing);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public BillingDTO processPayment(PaymentDTO paymentDto) {
         Billing billing = billingRepository.findById(paymentDto.getBillingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Billing", paymentDto.getBillingId()));

@@ -23,7 +23,7 @@ public class VisitService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
 
-    @Transactional
+    @Transactional(readOnly = false)
     public VisitDTO createVisit(VisitDTO dto) {
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
@@ -55,7 +55,7 @@ public class VisitService {
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public VisitDTO updateVisit(Long id, VisitDTO dto) {
         Visit visit = visitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
@@ -82,7 +82,7 @@ public class VisitService {
         return mapToDto(visit);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public VisitDTO completeVisit(Long id) {
         Visit visit = visitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit", id));

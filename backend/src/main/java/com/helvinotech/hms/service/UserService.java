@@ -22,7 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional
+    @Transactional(readOnly = false)
     public UserDTO createUser(UserDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new BadRequestException("Email already in use: " + dto.getEmail());
@@ -54,7 +54,7 @@ public class UserService {
         return userRepository.findByRole(role).stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public UserDTO updateUser(Long id, UserDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
@@ -71,7 +71,7 @@ public class UserService {
         return mapToDto(userRepository.save(user));
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public void changePassword(Long id, String currentPassword, String newPassword) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
@@ -82,7 +82,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public void deactivateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));

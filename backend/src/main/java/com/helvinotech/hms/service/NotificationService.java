@@ -21,6 +21,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = false)
     public void createNotification(Long userId, NotificationType type, String title, String message) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
@@ -37,7 +38,7 @@ public class NotificationService {
         return notificationRepository.countByUserIdAndReadFalse(userId);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public void markAsRead(Long notificationId) {
         Notification n = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", notificationId));
@@ -45,7 +46,7 @@ public class NotificationService {
         notificationRepository.save(n);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public void markAllAsRead(Long userId) {
         notificationRepository.findByUserIdAndReadFalse(userId)
                 .forEach(n -> { n.setRead(true); notificationRepository.save(n); });

@@ -32,6 +32,7 @@ public class WardService {
     private final UserRepository userRepository;
 
     // Ward CRUD
+    @Transactional(readOnly = false)
     public WardDTO createWard(WardDTO dto) {
         Ward ward = Ward.builder().name(dto.getName()).type(dto.getType()).totalBeds(dto.getTotalBeds()).build();
         return mapWardToDto(wardRepository.save(ward));
@@ -41,6 +42,7 @@ public class WardService {
         return wardRepository.findByActiveTrue().stream().map(this::mapWardToDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = false)
     public WardDTO updateWard(Long id, WardDTO dto) {
         Ward ward = wardRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ward", id));
         ward.setName(dto.getName());
@@ -50,6 +52,7 @@ public class WardService {
     }
 
     // Room CRUD
+    @Transactional(readOnly = false)
     public RoomDTO createRoom(RoomDTO dto) {
         Ward ward = wardRepository.findById(dto.getWardId()).orElseThrow(() -> new ResourceNotFoundException("Ward", dto.getWardId()));
         Room room = Room.builder().roomNumber(dto.getRoomNumber()).ward(ward).type(dto.getType()).build();
@@ -61,6 +64,7 @@ public class WardService {
     }
 
     // Bed CRUD
+    @Transactional(readOnly = false)
     public BedDTO createBed(BedDTO dto) {
         Room room = roomRepository.findById(dto.getRoomId()).orElseThrow(() -> new ResourceNotFoundException("Room", dto.getRoomId()));
         Bed bed = Bed.builder().bedNumber(dto.getBedNumber()).room(room).dailyCharge(dto.getDailyCharge()).build();
@@ -72,7 +76,7 @@ public class WardService {
     }
 
     // Admissions
-    @Transactional
+    @Transactional(readOnly = false)
     public AdmissionDTO admitPatient(AdmissionDTO dto) {
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
@@ -95,7 +99,7 @@ public class WardService {
         return mapAdmissionToDto(admissionRepository.save(admission));
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public AdmissionDTO dischargePatient(Long admissionId, String dischargeSummary) {
         Admission admission = admissionRepository.findById(admissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
@@ -113,6 +117,7 @@ public class WardService {
     }
 
     // Nursing Notes
+    @Transactional(readOnly = false)
     public NursingNoteDTO addNursingNote(NursingNoteDTO dto) {
         Admission admission = admissionRepository.findById(dto.getAdmissionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Admission", dto.getAdmissionId()));

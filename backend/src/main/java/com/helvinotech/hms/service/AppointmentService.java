@@ -28,7 +28,7 @@ public class AppointmentService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
 
-    @Transactional
+    @Transactional(readOnly = false)
     public AppointmentDTO createAppointment(AppointmentDTO dto) {
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
@@ -67,7 +67,7 @@ public class AppointmentService {
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public AppointmentDTO updateStatus(Long id, AppointmentStatus status) {
         Appointment apt = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", id));

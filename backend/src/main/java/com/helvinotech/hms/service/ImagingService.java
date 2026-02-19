@@ -28,7 +28,7 @@ public class ImagingService {
     private final VisitRepository visitRepository;
     private final UserRepository userRepository;
 
-    @Transactional
+    @Transactional(readOnly = false)
     public ImagingOrderDTO createOrder(ImagingOrderDTO dto) {
         Visit visit = visitRepository.findById(dto.getVisitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Visit", dto.getVisitId()));
@@ -50,7 +50,7 @@ public class ImagingService {
         return imagingOrderRepository.findByStatus(status, pageable).map(this::mapToDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public ImagingOrderDTO completeOrder(Long id, String findings, String impression, Long radiologistId) {
         ImagingOrder order = imagingOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Imaging Order", id));

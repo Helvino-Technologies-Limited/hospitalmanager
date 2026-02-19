@@ -27,6 +27,7 @@ public class LabService {
     private final UserRepository userRepository;
 
     // Lab Test CRUD
+    @Transactional(readOnly = false)
     public LabTestDTO createTest(LabTestDTO dto) {
         LabTest test = new LabTest();
         mapTestDtoToEntity(dto, test);
@@ -38,6 +39,7 @@ public class LabService {
         return labTestRepository.findByActiveTrue().stream().map(this::mapTestToDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = false)
     public LabTestDTO updateTest(Long id, LabTestDTO dto) {
         LabTest test = labTestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Test", id));
@@ -46,7 +48,7 @@ public class LabService {
     }
 
     // Lab Orders
-    @Transactional
+    @Transactional(readOnly = false)
     public LabOrderDTO createOrder(Long visitId, Long testId, Long orderedById) {
         Visit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Visit", visitId));
@@ -68,7 +70,7 @@ public class LabService {
         return labOrderRepository.findByStatus(status, pageable).map(this::mapOrderToDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public LabOrderDTO collectSample(Long orderId) {
         LabOrder order = labOrderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
@@ -77,7 +79,7 @@ public class LabService {
         return mapOrderToDto(labOrderRepository.save(order));
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public LabOrderDTO processResult(Long orderId, String result, boolean abnormal, String remarks, Long processedById) {
         LabOrder order = labOrderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
@@ -92,7 +94,7 @@ public class LabService {
         return mapOrderToDto(labOrderRepository.save(order));
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public LabOrderDTO verifyResult(Long orderId, Long verifiedById) {
         LabOrder order = labOrderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
@@ -104,7 +106,7 @@ public class LabService {
         return mapOrderToDto(labOrderRepository.save(order));
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public LabOrderDTO releaseResult(Long orderId) {
         LabOrder order = labOrderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));

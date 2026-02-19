@@ -25,7 +25,7 @@ public class PatientService {
     private final InsuranceCompanyRepository insuranceCompanyRepository;
     private static final AtomicLong counter = new AtomicLong(0);
 
-    @Transactional
+    @Transactional(readOnly = false)
     public PatientDTO createPatient(PatientDTO dto) {
         Patient patient = new Patient();
         patient.setPatientNo(generatePatientNo());
@@ -54,7 +54,7 @@ public class PatientService {
         return patientRepository.searchPatients(query, pageable).map(this::mapEntityToDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public PatientDTO updatePatient(Long id, PatientDTO dto) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", id));

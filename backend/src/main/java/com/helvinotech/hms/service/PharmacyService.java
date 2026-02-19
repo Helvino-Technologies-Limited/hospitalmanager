@@ -30,6 +30,7 @@ public class PharmacyService {
     private final PrescriptionRepository prescriptionRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = false)
     public DrugDTO createDrug(DrugDTO dto) {
         Drug drug = new Drug();
         mapDtoToEntity(dto, drug);
@@ -50,7 +51,7 @@ public class PharmacyService {
         return drugRepository.searchDrugs(query, pageable).map(this::mapDrugToDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public DrugDTO updateDrug(Long id, DrugDTO dto) {
         Drug drug = drugRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Drug", id));
@@ -58,7 +59,7 @@ public class PharmacyService {
         return mapDrugToDto(drugRepository.save(drug));
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public PrescriptionDTO dispensePrescription(Long prescriptionId, Long pharmacistId) {
         Prescription rx = prescriptionRepository.findById(prescriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prescription", prescriptionId));

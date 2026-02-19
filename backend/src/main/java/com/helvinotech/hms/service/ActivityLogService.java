@@ -16,6 +16,7 @@ public class ActivityLogService {
 
     private final ActivityLogRepository activityLogRepository;
 
+    @Transactional(readOnly = false)
     public void log(User user, String action, String entityType, Long entityId, String details) {
         ActivityLog log = ActivityLog.builder()
                 .user(user)
