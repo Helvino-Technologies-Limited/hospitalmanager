@@ -5,11 +5,13 @@ import com.helvinotech.hms.dto.PrescriptionDTO;
 import com.helvinotech.hms.entity.Drug;
 import com.helvinotech.hms.entity.Prescription;
 import com.helvinotech.hms.entity.User;
+import com.helvinotech.hms.entity.Visit;
 import com.helvinotech.hms.exception.BadRequestException;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.DrugRepository;
 import com.helvinotech.hms.repository.PrescriptionRepository;
 import com.helvinotech.hms.repository.UserRepository;
+import com.helvinotech.hms.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,7 @@ public class PharmacyService {
     private final DrugRepository drugRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final UserRepository userRepository;
+    private final VisitRepository visitRepository;
 
     @Transactional(readOnly = false)
     public DrugDTO createDrug(DrugDTO dto) {
@@ -78,6 +81,24 @@ public class PharmacyService {
         rx.setQuantityDispensed(qty);
         rx.setDispensedBy(pharmacist);
         rx.setDispensedAt(LocalDateTime.now());
+        return mapPrescriptionToDto(prescriptionRepository.save(rx));
+    }
+
+    @Transactional(readOnly = false)
+    public PrescriptionDTO createPrescription(PrescriptionDTO dto) {
+        Visit visit = visitRepository.findById(dto.getVisitId())
+                .orElseThrow(() -> new ResourceNotFoundException("Visit", dto.getVisitId()));
+        Drug drug = drugRepository.findById(dto.getDrugId())
+                .orElseThrow(() -> new ResourceNotFoundException("Drug", dto.getDrugId()));
+        Prescription rx = Prescription.builder()
+                .visit(visit)
+                .drug(drug)
+                .dosage(dto.getDosage())
+                .frequency(dto.getFrequency())
+                .duration(dto.getDuration())
+                .quantityPrescribed(dto.getQuantityPrescribed())
+                .instructions(dto.getInstructions())
+                .build();
         return mapPrescriptionToDto(prescriptionRepository.save(rx));
     }
 

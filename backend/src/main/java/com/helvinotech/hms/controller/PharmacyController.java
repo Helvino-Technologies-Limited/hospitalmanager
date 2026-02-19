@@ -55,6 +55,11 @@ public class PharmacyController {
         return ResponseEntity.ok(ApiResponse.success(pharmacyService.getExpiringDrugs()));
     }
 
+    @PostMapping("/prescriptions")
+    public ResponseEntity<ApiResponse<PrescriptionDTO>> createPrescription(@Valid @RequestBody PrescriptionDTO dto) {
+        return ResponseEntity.ok(ApiResponse.success(pharmacyService.createPrescription(dto)));
+    }
+
     @GetMapping("/prescriptions/pending")
     public ResponseEntity<ApiResponse<List<PrescriptionDTO>>> getPendingPrescriptions() {
         return ResponseEntity.ok(ApiResponse.success(pharmacyService.getPendingPrescriptions()));

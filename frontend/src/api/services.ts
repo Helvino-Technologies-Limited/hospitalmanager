@@ -56,6 +56,8 @@ export const pharmacyApi = {
   updateDrug: (id: number, data: Partial<Drug>) => api.put<ApiResponse<Drug>>(`/pharmacy/drugs/${id}`, data),
   getLowStock: () => api.get<ApiResponse<Drug[]>>('/pharmacy/drugs/low-stock'),
   getExpiring: () => api.get<ApiResponse<Drug[]>>('/pharmacy/drugs/expiring'),
+  createPrescription: (data: Partial<Prescription>) =>
+    api.post<ApiResponse<Prescription>>('/pharmacy/prescriptions', data),
   getPendingRx: () => api.get<ApiResponse<Prescription[]>>('/pharmacy/prescriptions/pending'),
   getVisitRx: (visitId: number) => api.get<ApiResponse<Prescription[]>>(`/pharmacy/prescriptions/visit/${visitId}`),
   dispense: (id: number, pharmacistId: number) =>
