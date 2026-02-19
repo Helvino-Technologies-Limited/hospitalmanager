@@ -456,9 +456,9 @@ function VisitCard({ visit, onPrescribe }: { visit: Visit; onPrescribe: (id: num
       </div>
 
       <div className="flex gap-4 mt-3 text-xs text-gray-500">
-        {visit.prescriptions.length > 0 && <span>{visit.prescriptions.length} prescription(s)</span>}
-        {visit.labOrders.length > 0 && <span>{visit.labOrders.length} lab order(s)</span>}
-        {visit.imagingOrders.length > 0 && <span>{visit.imagingOrders.length} imaging order(s)</span>}
+        {visit.prescriptions?.length > 0 && <span>{visit.prescriptions.length} prescription(s)</span>}
+        {visit.labOrders?.length > 0 && <span>{visit.labOrders.length} lab order(s)</span>}
+        {visit.imagingOrders?.length > 0 && <span>{visit.imagingOrders.length} imaging order(s)</span>}
       </div>
 
       {expanded && (
@@ -609,8 +609,8 @@ th{background:#f5f5f5;font-weight:600}
 <div style="text-align:right"><strong>Invoice:</strong> ${bill.invoiceNumber}<br/><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}<br/><strong>Status:</strong> ${bill.status}</div>
 </div>
 <table><thead><tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>
-${bill.items.map(i => `<tr><td>${i.description}</td><td>${i.quantity}</td><td>${formatCurrency(i.unitPrice)}</td><td>${formatCurrency(i.totalPrice)}</td></tr>`).join('')}
-${bill.items.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:#999">No items</td></tr>' : ''}
+${(bill.items || []).map(i => `<tr><td>${i.description}</td><td>${i.quantity}</td><td>${formatCurrency(i.unitPrice)}</td><td>${formatCurrency(i.totalPrice)}</td></tr>`).join('')}
+${!bill.items || bill.items.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:#999">No items</td></tr>' : ''}
 </tbody></table>
 <div class="totals">
 <div>Total: <strong>${formatCurrency(bill.totalAmount)}</strong></div>
@@ -618,7 +618,7 @@ ${bill.items.length === 0 ? '<tr><td colspan="4" style="text-align:center;color:
 <div>Insurance: <strong style="color:#2563eb">${formatCurrency(bill.insuranceCoveredAmount)}</strong></div>
 <div class="balance">Balance: ${formatCurrency(balance)}</div>
 </div>
-${bill.payments.length > 0 ? `<div class="payments"><h3>Payments</h3><table><thead><tr><th>Date</th><th>Method</th><th>Amount</th><th>Receipt #</th><th>Received By</th></tr></thead><tbody>
+${bill.payments?.length > 0 ? `<div class="payments"><h3>Payments</h3><table><thead><tr><th>Date</th><th>Method</th><th>Amount</th><th>Receipt #</th><th>Received By</th></tr></thead><tbody>
 ${bill.payments.map(p => `<tr><td>${new Date(p.createdAt).toLocaleDateString()}</td><td>${p.paymentMethod}</td><td>${formatCurrency(p.amount)}</td><td>${p.receiptNumber || '-'}</td><td>${p.receivedByName || '-'}</td></tr>`).join('')}
 </tbody></table></div>` : ''}
 <div class="footer"><p>Thank you for choosing ${HOSPITAL_NAME}</p><p>Printed on ${new Date().toLocaleString()}</p><p style="margin-top:6px;font-size:10px;color:#bbb">Powered by Helvino Technologies | www.helvino.com</p></div>
@@ -652,7 +652,7 @@ ${bill.payments.map(p => `<tr><td>${new Date(p.createdAt).toLocaleDateString()}<
             <div><p className="text-gray-500">Paid</p><p className="font-semibold text-green-700">{formatCurrency(bill.paidAmount)}</p></div>
             <div><p className="text-gray-500">Insurance</p><p className="font-semibold text-blue-700">{formatCurrency(bill.insuranceCoveredAmount)}</p></div>
           </div>
-          {bill.items.length > 0 && (
+          {bill.items?.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100">
               <p className="text-xs font-medium text-gray-500 mb-2">Items</p>
               <div className="space-y-1">
