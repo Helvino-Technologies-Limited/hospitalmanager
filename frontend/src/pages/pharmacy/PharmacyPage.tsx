@@ -340,7 +340,7 @@ export default function PharmacyPage() {
                 <select value={rxForm.visitId} onChange={(e) => setRxForm((p) => ({ ...p, visitId: e.target.value }))} className={inputClass} required>
                   <option value="">Select a visit</option>
                   {patientVisits.map((v) => (
-                    <option key={v.id} value={v.id}>Visit #{v.id} - {new Date(v.createdAt).toLocaleDateString()} ({v.status})</option>
+                    <option key={v.id} value={v.id}>Visit #{v.id} - {new Date(v.createdAt).toLocaleDateString()} ({v.completed ? 'Completed' : 'In Progress'})</option>
                   ))}
                 </select>
               ) : (
