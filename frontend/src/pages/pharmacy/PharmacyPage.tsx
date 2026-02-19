@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Plus, AlertTriangle, Pill, ClipboardList, FileText, X } from 'lucide-react';
+import { Search, Plus, AlertTriangle, Pill, ClipboardList, FileText, X, Pencil } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import Modal from '../../components/Modal';
 import { pharmacyApi, patientApi, visitApi } from '../../api/services';
@@ -28,6 +28,8 @@ export default function PharmacyPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [form, setForm] = useState<Partial<Drug>>(emptyDrug);
   const [saving, setSaving] = useState(false);
+  const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [rxLoading, setRxLoading] = useState(false);
@@ -80,6 +82,26 @@ export default function PharmacyPage() {
     setSaving(true);
     try { await pharmacyApi.createDrug(form); setAddModalOpen(false); setForm(emptyDrug); fetchDrugs(); fetchLowStock(); }
     catch { /* handled */ } finally { setSaving(false); }
+  };
+
+  const openEditModal = (drug: Drug) => {
+    setEditingDrug(drug);
+    setForm({
+      genericName: drug.genericName, brandName: drug.brandName, category: drug.category,
+      formulation: drug.formulation, strength: drug.strength, quantityInStock: drug.quantityInStock,
+      reorderLevel: drug.reorderLevel, batchNumber: drug.batchNumber, expiryDate: drug.expiryDate || '',
+      supplier: drug.supplier || '', costPrice: drug.costPrice, sellingPrice: drug.sellingPrice,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditDrug = async () => {
+    if (!editingDrug) return;
+    setSaving(true);
+    try {
+      await pharmacyApi.updateDrug(editingDrug.id, form);
+      setEditModalOpen(false); setEditingDrug(null); setForm(emptyDrug); fetchDrugs(); fetchLowStock();
+    } catch { /* handled */ } finally { setSaving(false); }
   };
 
   const handleDispense = async (rx: Prescription) => {
@@ -166,10 +188,16 @@ export default function PharmacyPage() {
     {
       key: 'actions', label: 'Action',
       render: (d: Drug) => (
-        <button onClick={(e) => { e.stopPropagation(); openPrescribeModal(d); }}
-          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
-          Prescribe
-        </button>
+        <div className="flex gap-2">
+          <button onClick={(e) => { e.stopPropagation(); openEditModal(d); }}
+            className="p-1.5 text-gray-400 hover:text-blue-600" title="Edit Drug">
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); openPrescribeModal(d); }}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+            Prescribe
+          </button>
+        </div>
       ),
     },
   ];
@@ -285,6 +313,44 @@ export default function PharmacyPage() {
           <button onClick={handleAddDrug} disabled={saving || !form.genericName || !form.category}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
             {saving ? 'Saving...' : 'Add Drug'}</button>
+        </div>
+      </Modal>
+
+      {/* Edit Drug Modal */}
+      <Modal open={editModalOpen} onClose={() => { setEditModalOpen(false); setEditingDrug(null); }} title="Edit Drug" size="lg">
+        <div className="grid grid-cols-2 gap-4">
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Generic Name</label>
+            <input type="text" value={form.genericName || ''} onChange={(e) => updateForm('genericName', e.target.value)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+            <input type="text" value={form.brandName || ''} onChange={(e) => updateForm('brandName', e.target.value)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select value={form.category || ''} onChange={(e) => updateForm('category', e.target.value)} className={inputClass}>
+              <option value="">Select category</option>{DRUG_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Formulation</label>
+            <select value={form.formulation || ''} onChange={(e) => updateForm('formulation', e.target.value)} className={inputClass}>
+              <option value="">Select formulation</option>{FORMULATIONS.map((f) => <option key={f} value={f}>{f}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Strength</label>
+            <input type="text" value={form.strength || ''} onChange={(e) => updateForm('strength', e.target.value)} placeholder="e.g. 500mg" className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Quantity in Stock</label>
+            <input type="number" value={form.quantityInStock || 0} onChange={(e) => updateForm('quantityInStock', parseInt(e.target.value) || 0)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Reorder Level</label>
+            <input type="number" value={form.reorderLevel || 0} onChange={(e) => updateForm('reorderLevel', parseInt(e.target.value) || 0)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Batch Number</label>
+            <input type="text" value={form.batchNumber || ''} onChange={(e) => updateForm('batchNumber', e.target.value)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+            <input type="date" value={form.expiryDate || ''} onChange={(e) => updateForm('expiryDate', e.target.value)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+            <input type="text" value={form.supplier || ''} onChange={(e) => updateForm('supplier', e.target.value)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Cost Price (KES)</label>
+            <input type="number" value={form.costPrice || 0} onChange={(e) => updateForm('costPrice', parseFloat(e.target.value) || 0)} className={inputClass} /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (KES)</label>
+            <input type="number" value={form.sellingPrice || 0} onChange={(e) => updateForm('sellingPrice', parseFloat(e.target.value) || 0)} className={inputClass} /></div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button onClick={() => { setEditModalOpen(false); setEditingDrug(null); }} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+          <button onClick={handleEditDrug} disabled={saving || !form.genericName || !form.category}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            {saving ? 'Saving...' : 'Update Drug'}</button>
         </div>
       </Modal>
 

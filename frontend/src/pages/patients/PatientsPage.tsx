@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Pencil } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import Modal from '../../components/Modal';
 import { patientApi, insuranceApi } from '../../api/services';
@@ -36,6 +36,9 @@ export default function PatientsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [insuranceCompanies, setInsuranceCompanies] = useState<InsuranceCompany[]>([]);
+  const [editModal, setEditModal] = useState(false);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
   const fetchPatients = useCallback(async () => {
     setLoading(true);
@@ -86,8 +89,40 @@ export default function PatientsPage() {
     }
   };
 
+  const openEditModal = async (patient: Patient) => {
+    setEditingPatient(patient);
+    setEditForm({
+      fullName: patient.fullName, gender: patient.gender, phone: patient.phone || '',
+      dateOfBirth: patient.dateOfBirth || '', email: patient.email || '', idNumber: patient.idNumber || '',
+      address: patient.address || '', nextOfKinName: patient.nextOfKinName || '', nextOfKinPhone: patient.nextOfKinPhone || '',
+      nextOfKinRelationship: patient.nextOfKinRelationship || '', allergies: patient.allergies || '',
+      bloodGroup: patient.bloodGroup || '', insuranceCompanyId: patient.insuranceCompanyId || null,
+      insuranceMemberNumber: patient.insuranceMemberNumber || '',
+    });
+    setEditModal(true);
+    try {
+      const res = await insuranceApi.getCompanies();
+      setInsuranceCompanies(res.data.data);
+    } catch { /* ignore */ }
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPatient) return;
+    setSubmitting(true);
+    try {
+      await patientApi.update(editingPatient.id, editForm);
+      setEditModal(false);
+      fetchPatients();
+    } catch { /* handled */ } finally { setSubmitting(false); }
+  };
+
   const updateField = (field: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateEditField = (field: string, value: unknown) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const columns = [
@@ -104,6 +139,16 @@ export default function PatientsPage() {
       key: 'insuranceCompanyName',
       label: 'Insurance',
       render: (p: Patient) => p.insuranceCompanyName || <span className="text-gray-400">None</span>,
+    },
+    {
+      key: 'actions',
+      label: '',
+      render: (p: Patient) => (
+        <button onClick={(e) => { e.stopPropagation(); openEditModal(p); }}
+          className="text-gray-400 hover:text-blue-600 p-1" title="Edit Patient">
+          <Pencil className="w-4 h-4" />
+        </button>
+      ),
     },
   ];
 
@@ -323,6 +368,112 @@ export default function PatientsPage() {
             >
               {submitting ? 'Registering...' : 'Register Patient'}
             </button>
+          </div>
+        </form>
+      </Modal>
+      {/* Edit Patient Modal */}
+      <Modal open={editModal} onClose={() => setEditModal(false)} title={`Edit Patient — ${editingPatient?.fullName || ''}`} size="xl">
+        <form onSubmit={handleEdit} className="space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Personal Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Full Name *</label>
+                <input required type="text" value={editForm.fullName} onChange={(e) => updateEditField('fullName', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Gender *</label>
+                <select required value={editForm.gender} onChange={(e) => updateEditField('gender', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {genderOptions.map((g) => <option key={g} value={g}>{g.charAt(0) + g.slice(1).toLowerCase()}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Date of Birth</label>
+                <input type="date" value={editForm.dateOfBirth} onChange={(e) => updateEditField('dateOfBirth', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">ID Number</label>
+                <input type="text" value={editForm.idNumber} onChange={(e) => updateEditField('idNumber', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Phone *</label>
+                <input required type="tel" value={editForm.phone} onChange={(e) => updateEditField('phone', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                <input type="email" value={editForm.email} onChange={(e) => updateEditField('email', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
+                <input type="text" value={editForm.address} onChange={(e) => updateEditField('address', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Blood Group</label>
+                <select value={editForm.bloodGroup} onChange={(e) => updateEditField('bloodGroup', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select</option>
+                  {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Allergies</label>
+                <input type="text" value={editForm.allergies} onChange={(e) => updateEditField('allergies', e.target.value)}
+                  placeholder="Comma separated"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Next of Kin</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Name</label>
+                <input type="text" value={editForm.nextOfKinName} onChange={(e) => updateEditField('nextOfKinName', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Phone</label>
+                <input type="tel" value={editForm.nextOfKinPhone} onChange={(e) => updateEditField('nextOfKinPhone', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Relationship</label>
+                <input type="text" value={editForm.nextOfKinRelationship} onChange={(e) => updateEditField('nextOfKinRelationship', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Insurance</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Insurance Company</label>
+                <select value={editForm.insuranceCompanyId ?? ''} onChange={(e) => updateEditField('insuranceCompanyId', e.target.value ? Number(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">None</option>
+                  {insuranceCompanies.map((ic) => <option key={ic.id} value={ic.id}>{ic.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Member Number</label>
+                <input type="text" value={editForm.insuranceMemberNumber} onChange={(e) => updateEditField('insuranceMemberNumber', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setEditModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+            <button type="submit" disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              {submitting ? 'Saving...' : 'Update Patient'}</button>
           </div>
         </form>
       </Modal>

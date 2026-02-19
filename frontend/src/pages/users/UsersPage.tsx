@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { UserCog, Plus, KeyRound } from 'lucide-react';
+import { UserCog, Plus, KeyRound, Pencil, UserX } from 'lucide-react';
 import { userApi } from '../../api/services';
 import type { User, UserRole } from '../../types';
 import DataTable from '../../components/DataTable';
@@ -18,6 +18,9 @@ export default function UsersPage() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [form, setForm] = useState({ fullName: '', email: '', password: '', phone: '', role: 'DOCTOR' as UserRole, department: '', specialization: '', licenseNumber: '' });
+  const [editModal, setEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ fullName: '', email: '', phone: '', role: 'DOCTOR' as UserRole, department: '', specialization: '', licenseNumber: '' });
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const loadUsers = () => {
     setLoading(true);
@@ -31,6 +34,30 @@ export default function UsersPage() {
     await userApi.create({ ...form, active: true });
     setShowModal(false);
     setForm({ fullName: '', email: '', password: '', phone: '', role: 'DOCTOR', department: '', specialization: '', licenseNumber: '' });
+    loadUsers();
+  };
+
+  const openEditModal = (user: User) => {
+    setEditingUser(user);
+    setEditForm({
+      fullName: user.fullName, email: user.email, phone: user.phone || '',
+      role: user.role, department: user.department || '', specialization: user.specialization || '',
+      licenseNumber: user.licenseNumber || '',
+    });
+    setEditModal(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    await userApi.update(editingUser.id, editForm);
+    setEditModal(false);
+    loadUsers();
+  };
+
+  const handleDeactivate = async (user: User) => {
+    if (!confirm(`Are you sure you want to deactivate ${user.fullName}?`)) return;
+    await userApi.deactivate(user.id);
     loadUsers();
   };
 
@@ -72,10 +99,22 @@ export default function UsersPage() {
     { key: 'department', label: 'Department', render: (u: User) => u.department || '-' },
     { key: 'active', label: 'Status', render: (u: User) => <StatusBadge status={u.active ? 'AVAILABLE' : 'MAINTENANCE'} /> },
     { key: 'actions', label: '', render: (u: User) => (
-      <button onClick={(e) => { e.stopPropagation(); openPasswordModal(u); }}
-        className="text-gray-400 hover:text-primary-600 p-1" title="Change Password">
-        <KeyRound className="w-4 h-4" />
-      </button>
+      <div className="flex gap-1">
+        <button onClick={(e) => { e.stopPropagation(); openEditModal(u); }}
+          className="text-gray-400 hover:text-blue-600 p-1" title="Edit">
+          <Pencil className="w-4 h-4" />
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); openPasswordModal(u); }}
+          className="text-gray-400 hover:text-primary-600 p-1" title="Change Password">
+          <KeyRound className="w-4 h-4" />
+        </button>
+        {u.active && (
+          <button onClick={(e) => { e.stopPropagation(); handleDeactivate(u); }}
+            className="text-gray-400 hover:text-red-600 p-1" title="Deactivate">
+            <UserX className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     )},
   ];
 
@@ -140,6 +179,51 @@ export default function UsersPage() {
             </div>
           </div>
           <button type="submit" className="w-full bg-primary-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-700">Create Staff Member</button>
+        </form>
+      </Modal>
+
+      <Modal open={editModal} onClose={() => setEditModal(false)} title={`Edit Staff — ${editingUser?.fullName || ''}`} size="lg">
+        <form onSubmit={handleEdit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <input value={editForm.fullName} onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                {roles.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <input value={editForm.department} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+              <input value={editForm.specialization} onChange={(e) => setEditForm({ ...editForm, specialization: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">License Number</label>
+              <input value={editForm.licenseNumber} onChange={(e) => setEditForm({ ...editForm, licenseNumber: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <button type="submit" className="w-full bg-primary-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-700">Update Staff Member</button>
         </form>
       </Modal>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Building2, Filter, FileCheck } from 'lucide-react';
+import { Building2, Filter, FileCheck, Pencil } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
@@ -51,6 +51,9 @@ export default function InsurancePage() {
   const [approvedAmount, setApprovedAmount] = useState(0);
   const [statusRemarks, setStatusRemarks] = useState('');
 
+  const [editCompanyModal, setEditCompanyModal] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<InsuranceCompany | null>(null);
+  const [editCompanyForm, setEditCompanyForm] = useState(emptyCompanyForm);
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch companies
@@ -109,6 +112,27 @@ export default function InsurancePage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const openEditCompany = (company: InsuranceCompany) => {
+    setEditingCompany(company);
+    setEditCompanyForm({
+      name: company.name, contactPerson: company.contactPerson || '',
+      phone: company.phone || '', email: company.email || '', address: company.address || '',
+    });
+    setEditCompanyModal(true);
+  };
+
+  const handleEditCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany) return;
+    setSubmitting(true);
+    try {
+      await insuranceApi.updateCompany(editingCompany.id, editCompanyForm);
+      setEditCompanyModal(false);
+      setEditingCompany(null);
+      fetchCompanies();
+    } catch { /* handled */ } finally { setSubmitting(false); }
   };
 
   const handleCreateClaim = async (e: React.FormEvent) => {
@@ -176,6 +200,16 @@ export default function InsurancePage() {
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${c.active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
           {c.active ? 'Active' : 'Inactive'}
         </span>
+      ),
+    },
+    {
+      key: 'actions',
+      label: '',
+      render: (c: InsuranceCompany) => (
+        <button onClick={(e) => { e.stopPropagation(); openEditCompany(c); }}
+          className="text-gray-400 hover:text-blue-600 p-1" title="Edit Company">
+          <Pencil className="w-4 h-4" />
+        </button>
       ),
     },
   ];
@@ -383,6 +417,46 @@ export default function InsurancePage() {
             >
               {submitting ? 'Adding...' : 'Add Company'}
             </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Company Modal */}
+      <Modal open={editCompanyModal} onClose={() => { setEditCompanyModal(false); setEditingCompany(null); }} title="Edit Insurance Company">
+        <form onSubmit={handleEditCompany} className="space-y-4">
+          <div>
+            <label className={labelClass}>Company Name *</label>
+            <input required type="text" value={editCompanyForm.name}
+              onChange={(e) => setEditCompanyForm((p) => ({ ...p, name: e.target.value }))} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Contact Person *</label>
+            <input required type="text" value={editCompanyForm.contactPerson}
+              onChange={(e) => setEditCompanyForm((p) => ({ ...p, contactPerson: e.target.value }))} className={inputClass} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Phone *</label>
+              <input required type="tel" value={editCompanyForm.phone}
+                onChange={(e) => setEditCompanyForm((p) => ({ ...p, phone: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Email *</label>
+              <input required type="email" value={editCompanyForm.email}
+                onChange={(e) => setEditCompanyForm((p) => ({ ...p, email: e.target.value }))} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Address</label>
+            <input type="text" value={editCompanyForm.address}
+              onChange={(e) => setEditCompanyForm((p) => ({ ...p, address: e.target.value }))} className={inputClass} />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => { setEditCompanyModal(false); setEditingCompany(null); }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+            <button type="submit" disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              {submitting ? 'Saving...' : 'Update Company'}</button>
           </div>
         </form>
       </Modal>
