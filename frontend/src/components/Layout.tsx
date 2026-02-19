@@ -1,12 +1,14 @@
+import { useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
+import { useNotificationStore } from '../store/notificationStore';
 import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, Pill, FlaskConical, Scan,
-  CreditCard, Shield, BedDouble, UserCog, BarChart3, Bell, LogOut, Menu, X, Settings, Heart
+  CreditCard, Shield, BedDouble, UserCog, BarChart3, Bell, LogOut, Menu, X, Settings, Heart, ClipboardList
 } from 'lucide-react';
 
-const navItems = [
+const baseNavItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/patients', label: 'Patients', icon: Users },
   { path: '/appointments', label: 'Appointments', icon: CalendarDays },
@@ -23,12 +25,25 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { fullName, role, logout } = useAuthStore();
+  const { fullName, role, userId, logout } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const location = useLocation();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!userId) return;
+    fetchUnreadCount(userId);
+    const interval = setInterval(() => fetchUnreadCount(userId), 30000);
+    return () => clearInterval(interval);
+  }, [userId, fetchUnreadCount]);
+
   const handleLogout = () => { logout(); navigate('/login'); };
+
+  const showQueue = role === 'DOCTOR' || role === 'NURSE';
+  const navItems = showQueue
+    ? [baseNavItems[0], { path: '/my-queue', label: 'My Queue', icon: ClipboardList }, ...baseNavItems.slice(1)]
+    : baseNavItems;
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -85,6 +100,11 @@ export default function Layout() {
           <div className="flex-1" />
           <Link to="/notifications" className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500">
             <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
         </header>
         <main className="flex-1 overflow-auto p-6">

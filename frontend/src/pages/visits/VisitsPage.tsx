@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Stethoscope } from 'lucide-react';
 import { visitApi, patientApi, userApi } from '../../api/services';
@@ -14,6 +14,7 @@ export default function VisitsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [patientSearch, setPatientSearch] = useState('');
   const [doctors, setDoctors] = useState<User[]>([]);
   const [form, setForm] = useState({ patientId: '', doctorId: '', visitType: 'OPD', chiefComplaint: '' });
   const navigate = useNavigate();
@@ -29,9 +30,29 @@ export default function VisitsPage() {
 
   useEffect(() => { loadVisits(); }, []);
 
+  const searchPatients = useCallback(async (q: string) => {
+    if (q.trim().length < 2) {
+      setPatients([]);
+      return;
+    }
+    try {
+      const res = await patientApi.search(q.trim());
+      setPatients(res.data.data.content);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => searchPatients(patientSearch), 300);
+    return () => clearTimeout(timer);
+  }, [patientSearch, searchPatients]);
+
   const openModal = () => {
-    patientApi.getAll(0, 100).then((r) => setPatients(r.data.data.content)).catch(() => {});
     userApi.getByRole('DOCTOR').then((r) => setDoctors(r.data.data)).catch(() => {});
+    setPatientSearch('');
+    setPatients([]);
+    setForm({ patientId: '', doctorId: '', visitType: 'OPD', chiefComplaint: '' });
     setShowModal(true);
   };
 
@@ -45,6 +66,8 @@ export default function VisitsPage() {
     setForm({ patientId: '', doctorId: '', visitType: 'OPD', chiefComplaint: '' });
     loadVisits();
   };
+
+  const selectedDoctor = doctors.find((d) => String(d.id) === form.doctorId);
 
   const columns = [
     { key: 'id', label: 'ID' },
@@ -77,19 +100,55 @@ export default function VisitsPage() {
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Patient</label>
-            <select value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" required>
-              <option value="">Select patient</option>
-              {patients.map((p) => <option key={p.id} value={p.id}>{p.fullName} ({p.patientNo})</option>)}
-            </select>
+            <input
+              type="text"
+              placeholder="Search patient by name or number..."
+              value={patientSearch}
+              onChange={(e) => {
+                setPatientSearch(e.target.value);
+                setForm({ ...form, patientId: '' });
+              }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            {patients.length > 0 && !form.patientId && (
+              <div className="mt-1 border border-gray-200 rounded-lg max-h-40 overflow-y-auto bg-white shadow-sm">
+                {patients.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      setForm({ ...form, patientId: String(p.id) });
+                      setPatientSearch(`${p.fullName} (${p.patientNo})`);
+                      setPatients([]);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-50 last:border-b-0"
+                  >
+                    <span className="font-medium">{p.fullName}</span>{' '}
+                    <span className="text-gray-500">{p.patientNo}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {form.patientId && (
+              <p className="text-xs text-green-600 mt-1">Patient selected</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Doctor</label>
             <select value={form.doctorId} onChange={(e) => setForm({ ...form, doctorId: e.target.value })}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
               <option value="">Select doctor</option>
-              {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>
+                  Dr. {d.fullName} — {d.department || 'N/A'} ({d.specialization || 'N/A'})
+                </option>
+              ))}
             </select>
+            {selectedDoctor && (
+              <p className="text-xs text-gray-500 mt-1">
+                {selectedDoctor.department}{selectedDoctor.specialization ? ` - ${selectedDoctor.specialization}` : ''}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Visit Type</label>
@@ -103,7 +162,7 @@ export default function VisitsPage() {
             <textarea value={form.chiefComplaint} onChange={(e) => setForm({ ...form, chiefComplaint: e.target.value })}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" rows={3} />
           </div>
-          <button type="submit" className="w-full bg-primary-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-700">
+          <button type="submit" disabled={!form.patientId} className="w-full bg-primary-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
             Create Visit
           </button>
         </form>
