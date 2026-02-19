@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, CalendarDays, CreditCard, BedDouble, FlaskConical, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Users, CalendarDays, CreditCard, BedDouble, FlaskConical, AlertTriangle } from 'lucide-react';
 import { dashboardApi } from '../../api/services';
 import type { Dashboard } from '../../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -35,12 +35,10 @@ export default function DashboardPage() {
     { label: 'Bed Occupancy', value: `${data?.bedOccupancyRate ?? 0}%`, icon: BedDouble, color: 'bg-orange-50 text-orange-600' },
   ];
 
-  const revenueData = [
-    { name: 'Mon', revenue: 45000 }, { name: 'Tue', revenue: 52000 },
-    { name: 'Wed', revenue: 48000 }, { name: 'Thu', revenue: 61000 },
-    { name: 'Fri', revenue: 55000 }, { name: 'Sat', revenue: 32000 },
-    { name: 'Sun', revenue: 28000 },
-  ];
+  const departmentData = Object.entries(data?.departmentVisits ?? {}).map(([name, visits]) => ({
+    name,
+    visits,
+  }));
 
   return (
     <div className="space-y-6">
@@ -68,20 +66,24 @@ export default function DashboardPage() {
         {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold text-gray-900">Revenue This Week</h2>
-            <div className="flex items-center gap-1 text-green-600 text-sm">
-              <TrendingUp className="w-4 h-4" /> +12.5%
-            </div>
+            <h2 className="font-semibold text-gray-900">Visits by Department</h2>
+            <div className="text-sm text-gray-500">{data?.visitsToday ?? 0} visits today</div>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
-              <YAxis axisLine={false} tickLine={false} fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-              <Tooltip formatter={(v: number | undefined) => [`KES ${(v ?? 0).toLocaleString()}`, 'Revenue']} />
-              <Bar dataKey="revenue" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {departmentData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={departmentData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                <YAxis axisLine={false} tickLine={false} fontSize={12} allowDecimals={false} />
+                <Tooltip formatter={(v: number | undefined) => [`${v ?? 0}`, 'Visits']} />
+                <Bar dataKey="visits" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
+              No department visit data available
+            </div>
+          )}
         </div>
 
         {/* Alerts */}

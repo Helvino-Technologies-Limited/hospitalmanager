@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Settings, Lock, Eye, EyeOff, Building } from 'lucide-react';
+import { Heart, Settings, Lock, Eye, EyeOff, FileText, Printer } from 'lucide-react';
 import { userApi } from '../../api/services';
 import { useAuthStore } from '../../store/authStore';
 import { useHospitalStore } from '../../store/hospitalStore';
@@ -119,54 +119,6 @@ export default function SettingsPage() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Building className="w-5 h-5 text-gray-700" />
-            <h2 className="font-semibold text-gray-900">Hospital Profile</h2>
-          </div>
-          <p className="text-xs text-gray-500 mb-4">These details appear on printed receipts and invoices.</p>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            hospital.update(profileForm);
-            setProfileSaved(true);
-            setTimeout(() => setProfileSaved(false), 3000);
-          }} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Name</label>
-              <input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
-              <input value={profileForm.tagline} onChange={(e) => setProfileForm({ ...profileForm, tagline: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-              <input value={profileForm.address} onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input value={profileForm.email} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            {profileSaved && (
-              <div className="text-sm px-3 py-2 rounded-lg bg-green-50 text-green-700">
-                Hospital profile saved successfully
-              </div>
-            )}
-            <button type="submit" className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700">
-              Save Changes
-            </button>
-          </form>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="font-semibold text-gray-900 mb-4">System Information</h2>
           <div className="space-y-3">
             <div className="flex justify-between py-2 border-b border-gray-50">
@@ -193,6 +145,121 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-semibold text-primary-900">Helvino Technologies Limited</p>
                 <p className="text-xs text-primary-600">helvinotechltd@gmail.com | +254 703 445 756</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Receipt / Invoice Settings — full width */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <FileText className="w-5 h-5 text-gray-700" />
+          <h2 className="font-semibold text-gray-900">Receipt / Invoice Settings</h2>
+        </div>
+        <p className="text-xs text-gray-500 mb-5">Edit the details that appear on printed receipts and invoices.</p>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Edit form */}
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            hospital.update(profileForm);
+            setProfileSaved(true);
+            setTimeout(() => setProfileSaved(false), 3000);
+          }} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Hospital / Facility Name</label>
+              <input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+              <input value={profileForm.tagline} onChange={(e) => setProfileForm({ ...profileForm, tagline: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Quality Healthcare Services" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <input value={profileForm.address} onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="e.g. P.O. Box 00000, Nairobi, Kenya" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input value={profileForm.email} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
+            </div>
+            {profileSaved && (
+              <div className="text-sm px-3 py-2 rounded-lg bg-green-50 text-green-700">
+                Receipt settings saved successfully
+              </div>
+            )}
+            <button type="submit" className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700">
+              Save Receipt Settings
+            </button>
+          </form>
+
+          {/* Live preview */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Printer className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Receipt Preview</span>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-5 bg-gray-50">
+              <div className="bg-white rounded-lg p-6 shadow-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
+                {/* Header */}
+                <div className="text-center border-b-2 border-gray-800 pb-3 mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">{profileForm.name || 'Hospital Name'}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{profileForm.tagline || 'Tagline'}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {profileForm.address || 'Address'} | Tel: {profileForm.phone || 'Phone'} | {profileForm.email || 'Email'}
+                  </p>
+                  <p className="text-xs font-semibold text-gray-700 mt-2">Receipt / Invoice</p>
+                </div>
+                {/* Sample body */}
+                <div className="flex justify-between text-xs text-gray-600 mb-3">
+                  <div>
+                    <p><span className="font-semibold">Patient:</span> John Doe</p>
+                    <p><span className="font-semibold">Patient No:</span> PT-001</p>
+                  </div>
+                  <div className="text-right">
+                    <p><span className="font-semibold">Invoice:</span> INV-001</p>
+                    <p><span className="font-semibold">Date:</span> {new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <table className="w-full text-xs mb-3">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="text-left p-1.5 font-semibold text-gray-600">Description</th>
+                      <th className="text-right p-1.5 font-semibold text-gray-600">Qty</th>
+                      <th className="text-right p-1.5 font-semibold text-gray-600">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-100">
+                      <td className="p-1.5 text-gray-600">Consultation</td>
+                      <td className="p-1.5 text-gray-600 text-right">1</td>
+                      <td className="p-1.5 text-gray-600 text-right">KES 1,500</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="p-1.5 text-gray-600">Lab - Full Blood Count</td>
+                      <td className="p-1.5 text-gray-600 text-right">1</td>
+                      <td className="p-1.5 text-gray-600 text-right">KES 800</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="text-right text-xs mb-3">
+                  <p className="font-bold text-gray-900">Total: KES 2,300</p>
+                </div>
+                {/* Footer */}
+                <div className="border-t border-gray-200 pt-2 text-center">
+                  <p className="text-[10px] text-gray-400">Thank you for choosing {profileForm.name || 'Hospital Name'}</p>
+                </div>
               </div>
             </div>
           </div>
